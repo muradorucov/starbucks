@@ -1,5 +1,6 @@
 const config = require("../config");
 const userModel = require("../model/user.model");
+const bcrypt = require('bcrypt');
 const { generateAccessToken, generateRefreshToken } = require("../utils/token");
 
 const login = async (req, res) => {
@@ -7,9 +8,10 @@ const login = async (req, res) => {
 
     try {
 
-        const user = await userModel.findOne({ username, password });
+        const user = await userModel.findOne({ username });
+        const match = await bcrypt.compare(password, user.password)
 
-        if (!user) {
+        if (!user || !match) {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
@@ -30,9 +32,12 @@ const login = async (req, res) => {
         })
         res.json({
             message: "Login successful",
-            user
+            user:{
+                username: user.username
+            }
         });
     } catch (error) {
+        console.log("Test error", error);
         res.status(500).json({
             message: "Internal server error",
             error: error

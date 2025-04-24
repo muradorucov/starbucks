@@ -1,5 +1,5 @@
 const { default: mongoose } = require("mongoose");
-const contactModel = require("../model/contact.model");
+const contactModel = require("../model/contact.model.js");
 
 const getContactList = async (req, res) => {
     try {
