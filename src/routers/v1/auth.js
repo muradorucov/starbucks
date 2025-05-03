@@ -6,5 +6,6 @@ const authRouter = express.Router();
 
 authRouter.post("/login", login);
 authRouter.get("/current-user", authenticate, currentUser)
+// logout
 
 module.exports = authRouter;
