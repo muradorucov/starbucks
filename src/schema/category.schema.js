@@ -10,7 +10,7 @@ const categorySchema = mongoose.Schema({
         type: Boolean,
         default: false
     },
-    parentId:{
+    parentId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Category",
         default: null

@@ -3,7 +3,6 @@ const productModel = require("../model/product.model");
 const getProductList = async (req, res) => {
     const id = req.params.categoryId;
     try {
-
         const products = await productModel.find({ categoryId: id }).populate("categoryId", "name");
         res.status(200).json(products);
     } catch (error) {
