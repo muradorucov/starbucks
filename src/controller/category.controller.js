@@ -3,7 +3,32 @@ const productModel = require("../model/product.model");
 
 const getCategoryList = async (req, res) => {
     try {
-        const categories = await categoryModel.find().populate({
+        const categories = await categoryModel.find({ isActive: true }).populate({
+            path: 'children',
+            select: 'name'
+        }).populate({
+            path: 'parentId',
+            select: 'name'
+        });
+
+
+        res.status(200).json({
+            message: "Category list fetch success",
+            categories,
+            total: categories.length
+        })
+    } catch (error) {
+
+        res.status(500).json({
+            message: "While fetching categories error",
+            error
+        });
+    }
+}
+
+const getCategoryListForAdmin = async (req, res) => {
+    try {
+        const categories = await categoryModel.find({ isDelete: false }).populate({
             path: 'children',
             select: 'name'
         }).populate({
@@ -65,9 +90,9 @@ const getSingleCategory = async (req, res) => {
         }).populate({
             path: 'children',
             select: 'name'
-        });
+        }).where({ isDelete: false });
 
-        if (!populatedCategory) {
+        if (!populatedCategory || populatedCategory.isDelete) {
             return res.status(404).json({ message: "Category not found" });
         }
         res.status(200).json({
@@ -87,7 +112,7 @@ const editCategory = async (req, res) => {
     const { id } = req.params
     try {
         const category = await categoryModel.findById(id);
-        if (!category) {
+        if (!category || category.isDelete) {
             return res.status(404).json({ message: "Category not found" });
         }
 
@@ -141,16 +166,22 @@ const editCategory = async (req, res) => {
 
 }
 
-const deleteCategory = async (req, res) => {
+const changeStatusForCategory = async (req, res) => {
     const categoryId = req.params.id
 
     try {
+
+        const category = await categoryModel.findById(id).where({ isDelete: false }).lean();
+        if (!category) {
+            return res.status(404).json({
+                message: "Category not found"
+            })
+        }
         const list = new Set();
 
         async function treeFunction(id) {
             list.add(id.toString());
 
-            const category = await categoryModel.findById(id).lean();
             if (category?.children?.length) {
                 for (let childId of category.children) {
                     await treeFunction(childId);
@@ -164,12 +195,62 @@ const deleteCategory = async (req, res) => {
 
         await categoryModel.updateMany(
             { _id: { $in: categoryIds } },
-            { $set: { isActive: false } }
+            { $set: { isActive: !category.isActive } }
         );
 
         await productModel.updateMany(
             { categoryId: { $in: categoryIds } },
-            { $set: { isActive: false } }
+            { $set: { isActive: !category.isActive } }
+        );
+
+        res.status(200).json({
+            message: "Category status changed successfully",
+            categoryIds
+        })
+
+    } catch (error) {
+        res.status(500).json({
+            message: "While Category delete error",
+            error
+        })
+
+    }
+}
+
+const deleteCategory = async (req, res) => {
+    const categoryId = req.params.id
+
+    try {
+        const category = await categoryModel.findById(categoryId).where({ isDelete: false }).lean();
+        if (!category) {
+            return res.status(404).json({
+                message: "Category not found"
+            })
+        }
+
+        const list = new Set();
+
+        async function treeFunction(id) {
+            list.add(id.toString());
+            if (category?.children?.length) {
+                for (let childId of category.children) {
+                    await treeFunction(childId);
+                }
+            }
+        }
+
+        await treeFunction(categoryId);
+
+        const categoryIds = Array.from(list);
+
+        await categoryModel.updateMany(
+            { _id: { $in: categoryIds } },
+            { $set: { isDelete: true, isActive: false } }
+        );
+
+        await productModel.updateMany(
+            { categoryId: { $in: categoryIds } },
+            { $set: { isDelete: true, isActive: false } }
         );
 
         res.status(200).json({
@@ -188,8 +269,10 @@ const deleteCategory = async (req, res) => {
 
 module.exports = {
     getCategoryList,
+    getCategoryListForAdmin,
     createCategory,
     editCategory,
     deleteCategory,
+    changeStatusForCategory,
     getSingleCategory
 }

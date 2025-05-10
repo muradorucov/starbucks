@@ -9,6 +9,8 @@ const config = {
     rsecret: process.env.REFRESH_SECRET_KEY,
     mongo_url: process.env.MONGO_URL,
     password: process.env.MONGO_PASSWORD,
+    email: process.env.EMAIL,
+    email_pass: process.env.EMAIL_PASS
 }
 
 module.exports = config

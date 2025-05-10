@@ -9,6 +9,10 @@ const contactSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    email: {
+        type: String,
+        required: true
+    },
     subject: {
         type: String,
         required: true
@@ -17,9 +21,17 @@ const contactSchema = mongoose.Schema({
         type: String,
         required: true
     },
-    isSee:{
+    isSee: {
         type: Boolean,
         default: false
+    },
+    isDeleted: {
+        type: Boolean,
+        default: false
+    },
+    isActive: {
+        type: Boolean,
+        default: true
     }
 }, { timestamps: true });
 

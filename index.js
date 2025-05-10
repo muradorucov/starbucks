@@ -15,6 +15,7 @@ app.use(router);
 app.use("/uploads", express.static(__dirname + "/src/uploads"));
 
 
+
 app.listen(config.port, () => {
     console.log(`Server is running on port ${config.port}`);
 })
